@@ -67,7 +67,12 @@ int main(int argc, char** argv) {
 			++i;
 		}
 		else if (std::strcmp(argv[i], "--help") == 0 || std::strcmp(argv[i], "-h") == 0) {
-			std::cerr << "display help and return 0";
+			std::cerr << "arguments for create_fasta\n";
+			std::cerr << "--min : an integer giving a lowerbound to the length of a sequence\n";
+			std::cerr << "--max : an integer giving an upperbound to the length of a sequence\n";
+			std::cerr << "-n    : an integer indecating how many sequences to create\n";
+			std::cerr << "--type: either \'nucl\' or \'prot\'\n";
+			std::cerr << "--out : name of output fasta file\n"; 
 			return 0;
 		}
 		else {

@@ -10,9 +10,9 @@
 
 
 std::string quality_string(size_t read_length, std::uniform_int_distribution<size_t> &, std::mt19937 &);
+void insert_bad_base(std::string&, double bad_read_prob, std::mt19937&, std::uniform_real_distribution<double>&);
 int main(int argc, char* argv[]) {
 	size_t i = 1;
-
 	// variables
 	size_t read_length = 20;
 	size_t num_reads = 100;
@@ -20,18 +20,18 @@ int main(int argc, char* argv[]) {
 	size_t max_qual = 'j';
 	std::string fasta_file;
 	std::fstream in_file;
+	double bad_read_prob = 0;
 	while (i < argc) {
 		std::string next_arg = argv[i];
-
 		if (next_arg == "--help" || next_arg == "-h") {
 			// display help and exit with 0
-			std::cout << std::left;
-			std::cout << std::setw(30)<< "--help -h" << "display this help successfully and exit" << '\n';
-			std::cout << std::setw(30)<< "--read-length -l" << "set read lenght" << '\n';
-			std::cout << std::setw(30)<< "--number-of-reads -n" << "set number of reads" << '\n';
-			std::cout << std::setw(30)<< "--min-quality --min" << "set minimum quality of phred quality string, use char as value" << '\n';
-			std::cout << std::setw(30)<< "--max-quality --max" << "set maximum quality of phred quality string, use char as value" << '\n';
-			std::cout << std::setw(30)<< "--fasta-file -i" << "name of fasta input file"<< '\n';
+			std::cerr << std::left;
+			std::cerr << std::setw(30)<< "--help -h" << "display this help successfully and exit" << '\n';
+			std::cerr << std::setw(30)<< "--read-length -l" << "set read lenght" << '\n';
+			std::cerr << std::setw(30)<< "--number-of-reads -n" << "set number of reads" << '\n';
+			std::cerr << std::setw(30)<< "--min-quality --min" << "set minimum quality of phred quality string, use char as value" << '\n';
+			std::cerr << std::setw(30)<< "--max-quality --max" << "set maximum quality of phred quality string, use char as value" << '\n';
+			std::cerr << std::setw(30)<< "--fasta-file -i" << "name of fasta input file"<< '\n';
 
 			return 0;
 		}
@@ -75,6 +75,17 @@ int main(int argc, char* argv[]) {
 				return 1;
 			}
 		}
+		else if (next_arg == "--bad-read-prob" || next_arg == "--brp") {
+			try {
+				bad_read_prob = std::stod(argv[++i]);
+			} catch(std::invalid_argument&) {
+				std::cerr << "invalid probability\n";		
+				return 1;
+			}
+		}
+		else {
+			std::cerr << "invalid command line argument\n";
+		}
 		++i;
 	}
 	std::string dna = "";
@@ -82,8 +93,9 @@ int main(int argc, char* argv[]) {
 	std::string title;
 	std::getline(in_file, title);
 	// remove '<' and trailing whitespace from title.
-	for (size_t i = 1; i < title.size() && title[i] != ' '; ++i) {}
-	title = title.substr(i-1);
+	for (i = 1; i < title.size() && title[i] != ' '; ++i) {}
+	title = title.substr(i+1);
+	// DEL_ME
 
 	while (in_file >> each_line && each_line[0] != '>') {
 		dna += each_line;
@@ -91,16 +103,20 @@ int main(int argc, char* argv[]) {
 	std::random_device rd;
 	std::mt19937 rand(rd());
 	std::uniform_int_distribution<size_t> dist(0, dna.size()-read_length);
+	std::uniform_real_distribution<double> double_dist(0,1);
 	// use a different distribution for the qualities.
 	std::uniform_int_distribution<size_t> q_dist(min_qual, max_qual);
-	for (size_t i = 0; i < num_reads-read_length; ++i) {
+	insert_bad_base(dna, bad_read_prob, rand, double_dist);
+	for (size_t i = 0; i < num_reads; ++i) {
 		size_t num = dist(rand);
-		std::cout << "@" << title << i+1 << '\n';
-		std::cout << dna.substr(num,read_length) << '\n';
+		std::cout << '@' << title << '\n';
+		std::cout << dna.substr(num, read_length) << '\n';
 		std::cout << "+\n";
-		std::cout << quality_string(read_length, q_dist, rand) << std::endl;
+		std::cout << quality_string(read_length, q_dist, rand) << '\n';
+
 	}	
 }
+
 
 std::string quality_string(size_t read_length, std::uniform_int_distribution<size_t> &dist, std::mt19937 & rand) {
 	std::string ans;
@@ -109,4 +125,22 @@ std::string quality_string(size_t read_length, std::uniform_int_distribution<siz
 		ans.push_back(dist(rand));
 	}
 	return ans;
+}
+void insert_bad_base(std::string& dna, double bad_read_prob, std::mt19937& rand, std::uniform_real_distribution<double> & real_dist) {
+	std::uniform_int_distribution<size_t> base_dist(0,4) ;
+	for (size_t i = 0; i < dna.size(); ++i) {
+		if (real_dist(rand) <= bad_read_prob) {
+			short num = base_dist(rand);
+			switch(num) {
+				case 0: dna[i] = 'A';
+						break;
+				case 1: dna[i] = 'C';
+						break;
+				case 2: dna[i] = 'G';
+						break;
+				case 3: dna[i] = 'T';
+						break;
+			}
+		}
+	}
 }

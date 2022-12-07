@@ -7,5 +7,5 @@ Create fasta and fastq files for practicing with alignment tools
 \
 ## Examples
 **create a fasta file called random_reads.fasta with 25 randomly generated sequences all between the length 250-500bp**\
- `./create_fasta -n 25 --min 250 --max 500 --out fandom_reads.fasta`
+ `./create_fasta -n 25 --min 250 --max 500 --out random_reads.fasta`
 

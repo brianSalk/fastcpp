@@ -32,6 +32,7 @@ int main(int argc, char* argv[]) {
 			std::cerr << std::setw(30)<< "--min-quality --min" << "set minimum quality of phred quality string, use char as value" << '\n';
 			std::cerr << std::setw(30)<< "--max-quality --max" << "set maximum quality of phred quality string, use char as value" << '\n';
 			std::cerr << std::setw(30)<< "--fasta-file -i" << "name of fasta input file"<< '\n';
+			std::cerr << std::setw(30)<< "--bad-read-prob -brp [float]" << "probability of false read"
 
 			return 0;
 		}

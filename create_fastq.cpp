@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
 	size_t read_length = 20;
 	size_t num_reads = 100;
 	size_t min_qual = '!';
-	size_t max_qual = 'j';
+	size_t max_qual = 'J';
 	std::string fasta_file;
 	std::fstream in_file;
 	double bad_read_prob = 0;
@@ -32,7 +32,7 @@ int main(int argc, char* argv[]) {
 			std::cerr << std::setw(30)<< "--min-quality --min" << "set minimum quality of phred quality string, use char as value" << '\n';
 			std::cerr << std::setw(30)<< "--max-quality --max" << "set maximum quality of phred quality string, use char as value" << '\n';
 			std::cerr << std::setw(30)<< "--fasta-file -i" << "name of fasta input file"<< '\n';
-			std::cerr << std::setw(30)<< "--bad-read-prob -brp [float]" << "probability of false read"
+			std::cerr << std::setw(30)<< "--bad-read-prob -brp [float]" << "probability of false read";
 
 			return 0;
 		}
@@ -48,23 +48,23 @@ int main(int argc, char* argv[]) {
 			try {
 				num_reads = std::stoul(argv[++i]);
 			} catch(std::invalid_argument) {
-				std::cerr << "invalid argument for read length\n";
+				std::cerr << "invalid argument for number of reads\n";
 				return 1;
 			}
 		}
 		else if (next_arg == "--max-quality" || next_arg == "--max") {
 			try {
-				max_qual = std::stoul(argv[++i]);
-			} catch(std::invalid_argument) {
-				std::cerr << "invalid argument for read length\n";
+				max_qual = argv[++i][0];
+			} catch(std::invalid_argument const& e) {
+				std::cerr << "invalid argument for max-quality\n";
 				return 1;
 			}
 		}
 		else if (next_arg == "--min-quality" || next_arg == "--min") {
 			try {
-				max_qual = std::stoul(argv[++i]);
+				min_qual = argv[++i][0];
 			} catch(std::invalid_argument) {
-				std::cerr << "invalid argument for read length\n";
+				std::cerr << "invalid argument for min-quality\n";
 				return 1;
 			}
 		}
@@ -96,7 +96,6 @@ int main(int argc, char* argv[]) {
 	// remove '<' and trailing whitespace from title.
 	for (i = 1; i < title.size() && title[i] != ' '; ++i) {}
 	title = title.substr(i+1);
-	// DEL_ME
 
 	while (in_file >> each_line && each_line[0] != '>') {
 		dna += each_line;

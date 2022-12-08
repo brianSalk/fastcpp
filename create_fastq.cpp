@@ -89,6 +89,10 @@ int main(int argc, char* argv[]) {
 		}
 		++i;
 	}
+	if (!in_file.is_open()) {
+		std::cerr << "please provide a fasta file\n";
+		return 1;
+	}
 	std::string dna = "";
 	std::string each_line;
 	std::string title;
@@ -132,13 +136,13 @@ void insert_bad_base(std::string& dna, double bad_read_prob, std::mt19937& rand,
 		if (real_dist(rand) <= bad_read_prob) {
 			short num = base_dist(rand);
 			switch(num) {
-				case 0: dna[i] = 'A';
+				case 0: dna[i] = (dna[i] != 'A') ? 'A' : 'C';
 						break;
-				case 1: dna[i] = 'C';
+				case 1: dna[i] = (dna[i] != 'C') ? 'C' : 'G';
 						break;
-				case 2: dna[i] = 'G';
+				case 2: dna[i] = (dna[i] != 'G') ? 'G' : 'T';
 						break;
-				case 3: dna[i] = 'T';
+				case 3: dna[i] = (dna[i] != 'T') ? 'T' : 'A';
 						break;
 			}
 		}

@@ -11,6 +11,24 @@
 
 std::string quality_string(size_t read_length, std::uniform_int_distribution<size_t> &, std::mt19937 &);
 void insert_bad_base(std::string&, double bad_read_prob, std::mt19937&, std::uniform_real_distribution<double>&);
+void output(std::ostream &os, std::string& dna, size_t read_length, char min_qual, char max_qual, double bad_read_prob, size_t num_reads, std::string const& title) {
+	std::random_device rd;
+	std::mt19937 rand(rd());
+	std::uniform_int_distribution<size_t> dist(0, dna.size()-read_length);
+	std::uniform_real_distribution<double> double_dist(0,1);
+	// use a different distribution for the qualities.
+	std::uniform_int_distribution<size_t> q_dist(min_qual, max_qual);
+	insert_bad_base(dna, bad_read_prob, rand, double_dist);
+	// randomly select an index in the fasta file DNA and read from that 
+	for (size_t i = 0; i < num_reads; ++i) {
+		size_t num = dist(rand);
+		os << '@' << title << '\n';
+		os << dna.substr(num, read_length) << '\n';
+		os << "+\n";
+		os << quality_string(read_length, q_dist, rand) << '\n';
+
+	}	
+}
 int main(int argc, char* argv[]) {
 	size_t i = 1;
 	// variables
@@ -20,6 +38,7 @@ int main(int argc, char* argv[]) {
 	size_t max_qual = 'J';
 	std::string fasta_file;
 	std::fstream in_file;
+	std::string out_file = "";
 	double bad_read_prob = 0;
 	while (i < argc) {
 		std::string next_arg = argv[i];
@@ -33,7 +52,7 @@ int main(int argc, char* argv[]) {
 			std::cerr << std::setw(30)<< "--max-quality --max" << "set maximum quality of phred quality string, use char as value" << '\n';
 			std::cerr << std::setw(30)<< "--fasta-file -i" << "name of fasta input file"<< '\n';
 			std::cerr << std::setw(30)<< "--bad-read-prob -brp [float]" << "probability of false read";
-
+			std::cerr << std::setw(30)<< "--out -o out_file" << "specify output fastq file";
 			return 0;
 		}
 		else if (next_arg == "--read-length" || next_arg == "-l") {
@@ -84,6 +103,9 @@ int main(int argc, char* argv[]) {
 				return 1;
 			}
 		}
+		else if (next_arg == "--out" || next_arg == "-o") {
+			out_file = argv[++i];
+		}
 		else {
 			std::cerr << "invalid command line argument\n";
 		}
@@ -104,21 +126,15 @@ int main(int argc, char* argv[]) {
 	while (in_file >> each_line && each_line[0] != '>') {
 		dna += each_line;
 	}
-	std::random_device rd;
-	std::mt19937 rand(rd());
-	std::uniform_int_distribution<size_t> dist(0, dna.size()-read_length);
-	std::uniform_real_distribution<double> double_dist(0,1);
-	// use a different distribution for the qualities.
-	std::uniform_int_distribution<size_t> q_dist(min_qual, max_qual);
-	insert_bad_base(dna, bad_read_prob, rand, double_dist);
-	for (size_t i = 0; i < num_reads; ++i) {
-		size_t num = dist(rand);
-		std::cout << '@' << title << '\n';
-		std::cout << dna.substr(num, read_length) << '\n';
-		std::cout << "+\n";
-		std::cout << quality_string(read_length, q_dist, rand) << '\n';
+	if (out_file == "") {
+		output(std::cout,dna, read_length, min_qual, max_qual,bad_read_prob, num_reads, title);
+	}
+	else {
+		std::ofstream ofs(out_file);
+		output(ofs,dna, read_length, min_qual, max_qual,bad_read_prob, num_reads, title);
+		ofs.close();
 
-	}	
+	}
 }
 
 
@@ -148,3 +164,5 @@ void insert_bad_base(std::string& dna, double bad_read_prob, std::mt19937& rand,
 		}
 	}
 }
+
+

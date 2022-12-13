@@ -1,5 +1,5 @@
 # fastcpp
-Create fasta and fastq files for practicing with alignment tools.  These files are generated randomly and can be a conveniant alternative to real data \
+Create fasta and fastq files for practicing with alignment tools.  These files are generated randomly and can be a conveniant alternative to real data
 when practicing with alignment tools or comparing performance of various algorithms.  I use these programs to help create educational content.
 ## How to use
 **1)** simply clone this repo to your computer `clone <link to this repo>`\

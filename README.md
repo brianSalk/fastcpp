@@ -3,7 +3,7 @@ Create fasta and fastq files for practicing with alignment tools.  These files a
 when practicing with alignment tools or comparing performance of various algorithms.  I use these programs to help create educational content.
 ## How to use
 **1)** simply clone this repo to your computer `git clone <link to this repo>`\
-**2)** compile the programs with your favorite c++ compiler.  \  
+**2)** compile the programs with your favorite c++ compiler. \
 eg. `g++ create_fasta.cpp -o create_fasta` and `g++ create_fasta.cpp -o create_fastq`\
 **3)** run the code and use the option `-h` for instructions. eg. `./create_fasta -h` 
 

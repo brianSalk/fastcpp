@@ -18,12 +18,27 @@ struct options {
 	size_t n = 10;
 	std::string out_file_name = "";
 	std::string seq = "seq";
+	void h(std::ostream &os) const {
+		os << "[--length,-l], [--min], [--max], [--num_seqs,-n], [--out,-o], [--seq], [--type]\n";
+	}
+	void help(std::ostream &os) const {
+		this->h(os);
+		os << "\n --length, -l: specify length of each sequence in fasta.  Overrides --min and --max\n";
+		os << "--min: minimum length of a randomly generated sequence.(ignored if -l or --length is also used)\n";
+		os << "--max: maximum length of a randomly generated sequence.(ignored if -l or --length is also used)\n";
+		os << "--num_seqs, -n: specify number of sequences to generate.\n";
+		os << "--out, -o: outfile to print fasta file to.  (print to stdout if nothing is specified)\n";
+		os << "--seq: base name of the sequence, if multiple sequences are generated, ascending integers starting at 1 will be appended to the base name\n";
+		os << "--type: specify the type of fasta file to create, (valid options are 'dna', 'rna', and 'prot')\n";
+	}
 };
+// if help exists in argv, print that argument and return true,
+// else return false
 // this function validates numeric arguments.
 // if the numeric argument is a valid positive integer, we simply return it
 // if the numeric argument is not a valid positive integer, throw or propogate exception that can be handled in main
 size_t get_numeric_arg(std::string const& n,std::string const& cmd);
-void parse_args(int argc, char** argv, options & flags);
+bool parse_args(int argc, char** argv, options & flags);
 
 // writes the new fasta file to out, selects one of letters at random.
 void create_fasta(std::ostream &out, options const& flags, std::vector<char> const& letters) {
@@ -50,11 +65,16 @@ void __dump_args(options const& flags) {
 	std::cout << "PRINT ALL FLAGS:\n";
 	std::cout << flags.length << '\n' << flags.max_len << '\n' << flags.min_len << '\n' << flags.n << '\n' << flags.out_file_name << '\n' << flags.seq << '\n' << flags.type << '\n';
 }
+
+
 int main(int argc, char** argv) {
 	options flags;
 	// process Command Line Arguments
 	try {
-		parse_args(argc,argv,flags);
+		bool helped = parse_args(argc,argv,flags);
+		if (helped) {
+			return 0;
+		}
 	}
 	catch(...) {
 		return 1;
@@ -88,7 +108,6 @@ int main(int argc, char** argv) {
 		prot.push_back('Z');
 		create_fasta(*os, flags, prot);
 	}
-
 	of.close();	
 
 	
@@ -117,9 +136,19 @@ size_t get_numeric_arg(std::string const& n,std::string const& cmd) {
 	return ans;
 }
 
-void parse_args(int argc, char** argv, options & flags) {
+bool parse_args(int argc, char** argv, options & flags) {
 		for (size_t i{1}; i < argc; ++i) {
 			std::string arg = argv[i];
+			// if next arg is --help or -h, print help then return true
+			if (arg == "--help") {
+				flags.help(std::cout);
+				return true;
+			}
+			else if (arg == "-h") {
+				flags.h(std::cout);
+				return true;
+			}
+
 			if (i+1 == argc) {
 				std::cerr << "missing required argument for: " << arg << '\n';
 				throw std::invalid_argument("");
@@ -145,10 +174,10 @@ void parse_args(int argc, char** argv, options & flags) {
 			else if (arg == "--length" || arg == "-l") { // handle length
 				flags.length = get_numeric_arg(argv[++i], arg);
 			}
-			else if (arg == "-n") { // handle n
+			else if (arg == "-n" || arg == "--num_seqs") { // handle n
 				flags.n = get_numeric_arg(argv[++i], arg);
 			}
-			else if (arg == "--out") { // handle --out
+			else if (arg == "--out" || arg == "-o") { // handle --out
 				flags.out_file_name = argv[++i];
 			}
 			else {
@@ -156,5 +185,5 @@ void parse_args(int argc, char** argv, options & flags) {
 				throw std::invalid_argument("");
 			}
 		}
-	
+	return false;
 }

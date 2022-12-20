@@ -23,6 +23,8 @@ struct options {
 	}
 	void help(std::ostream &os) const {
 		this->h(os);
+		os << "fastcpp is a command line tool that creates randomly generated fasta files\n";
+		os << "==========================================================================\n\n";
 		os << "\n --length, -l: specify length of each sequence in fasta.  Overrides --min and --max\n";
 		os << "--min: minimum length of a randomly generated sequence.(ignored if -l or --length is also used)\n";
 		os << "--max: maximum length of a randomly generated sequence.(ignored if -l or --length is also used)\n";

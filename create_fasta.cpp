@@ -9,165 +9,89 @@
 #include <stdexcept>
 #include <fstream>
 #include <limits>
+// store command line flags in the convenient options datatype, if adding a command line argument, add it here first.
 struct options {
 	std::string type = "dna";
 	size_t min_len = 20;
 	size_t max_len = 100;
 	size_t length = 0;
 	size_t n = 10;
-	std::string out_file_name = "out.out";
+	std::string out_file_name = "";
 	std::string seq = "seq";
 };
 // this function validates numeric arguments.
 // if the numeric argument is a valid positive integer, we simply return it
 // if the numeric argument is not a valid positive integer, throw or propogate exception that can be handled in main
 size_t get_numeric_arg(std::string const& n,std::string const& cmd);
-/*void parse_args(int argc, char** argv, options & flags) {
+void parse_args(int argc, char** argv, options & flags);
 
-}*/
-int main(int argc, char** argv) {
+// writes the new fasta file to out, selects one of letters at random.
+void create_fasta(std::ostream &out, options const& flags, std::vector<char> const& letters) {
 	std::random_device rd;
 	std::mt19937 rand(rd());
+	std::uniform_int_distribution<size_t> nuc_dist(0,letters.size()-1);
+	std::uniform_int_distribution<size_t> len_dist(flags.min_len,flags.max_len);
+	for (size_t each_seq{1}; each_seq <= flags.n; ++each_seq) {
+		std::string next_seq_name = "> " + flags.seq + std::to_string(each_seq) + '\n';
+		size_t next_len = len_dist(rand);
+		out << next_seq_name;
+		for (size_t i{0}; i < next_len;++i) {
+			size_t next_num{nuc_dist(rand)};
+			out << letters[next_num];
+		}
+		out << '\n';
+	}
+}
+
+
+
+// used for debugging only
+void __dump_args(options const& flags) {
+	std::cout << "PRINT ALL FLAGS:\n";
+	std::cout << flags.length << '\n' << flags.max_len << '\n' << flags.min_len << '\n' << flags.n << '\n' << flags.out_file_name << '\n' << flags.seq << '\n' << flags.type << '\n';
+}
+int main(int argc, char** argv) {
 	options flags;
 	// process Command Line Arguments
 	try {
-		for (size_t i{1}; i < argc; ++i) {
-			std::string arg = argv[i];
-			if (i+1 == argc) {
-				std::cerr << "missing required argument for: " << arg;
-				return 1;
-			}
-			if (arg == "--type") { // handle --type
-				std::string type = argv[++i];
-				if (type == "dna" || type == "rna" || type == "prot") {
-					flags.type = type;
-				} else {
-					std::cerr << "invalid argument to --type: " << type << '\n' << "choose one of 'dna','rna','prot'\n";
-					return 1;
-				}
-			}
-			else if (arg == "--min") { // handle --min
-				flags.min_len = get_numeric_arg(argv[++i], arg);
-			}
-			else if (arg == "--max") { // handle --max
-				flags.max_len = get_numeric_arg(argv[++i], arg);
-			} 
-			else if (arg == "--seq") { // handle seq
-				flags.seq = argv[++i];
-			}
-			else if (arg == "--length" || arg == "-l") { // handle length
-				flags.length = get_numeric_arg(argv[++i], arg);
-			}
-			else if (arg == "-n") { // handle n
-				flags.n = get_numeric_arg(argv[++i], arg);
-			}
-			else if (arg == "--out") { // handle --out
-				flags.out_file_name = argv[++i];
-			}
-			else {
-				std::cerr << "unrecognized flag: " << arg << '\n';
-				return 1;
-			}
-		}
+		parse_args(argc,argv,flags);
 	}
 	catch(...) {
 		return 1;
 	}
 	// END process command line arguments
+	__dump_args(flags);
+	// if length specified, override values for min_len and max_len
+	if (flags.length != 0) {
+		flags.max_len = flags.length;
+		flags.min_len = flags.length;
+	}
+	std::ostream *os;
+	std::ofstream of = std::ofstream(flags.out_file_name);
+	// if out_file_name specified, write to that file, else to stdout
+	if (flags.out_file_name != "") {
+		os = &of;
+	}
+	else {
+		os = &std::cout;
+	}
+	if (flags.type == "dna") {
+		create_fasta(*os, flags, {'A','C','G','T'});
+	} else if (flags.type == "rna") {
+		create_fasta(*os, flags, {'A', 'C', 'G', 'U'});
+	} else if (flags.type == "prot") {
+		std::vector<char> prot;
+		for (short i{0}; i + 'A' <= 'W'; ++i) {
+			prot.push_back(i+'A');
+		}
+		prot.push_back('Y');
+		prot.push_back('Z');
+		create_fasta(*os, flags, prot);
+	}
 
-	std::cout << "PRINT ALL FLAGS:\n";
-	std::cout << flags.length << '\n' << flags.max_len << '\n' << flags.min_len << '\n' << flags.n << '\n';
+	of.close();	
+
 	
-//	std::ofstream out_file(out_file_name);
-//	if (is_nucl) {
-//		std::uniform_int_distribution<size_t> nuc_dist(0,3);
-//		std::uniform_int_distribution<size_t> len_dist(min_len,max_len);
-//		for (size_t each_seq{1}; each_seq <= n; ++each_seq) {
-//			std::string next_seq_name = "> " + title + std::to_string(each_seq) + '\n';
-//			size_t next_len = len_dist(rand);
-//			out_file << next_seq_name;
-//			for (size_t i{0}; i < next_len;++i) {
-//				size_t next_num{nuc_dist(rand)};
-//				switch (next_num) {
-//					case 0: out_file << 'A';
-//							break;
-//					case 1: out_file << 'C';
-//							break;
-//					case 2: out_file << 'G';
-//							break;
-//					case 3: out_file << 'T';
-//							break;
-//				}
-//			}
-//			out_file << '\n';
-//		}
-//	} else {
-//		std::uniform_int_distribution<size_t> nuc_dist(0,19);
-//		std::uniform_int_distribution<size_t> len_dist(min_len,max_len);
-//		for (size_t each_seq{1}; each_seq <= n; ++each_seq) {
-//			std::string next_seq_name = "> seq" + std::to_string(each_seq) + '\n';
-//			size_t next_len = len_dist(rand);
-//			out_file << next_seq_name;
-//			for (size_t i{0}; i < next_len;++i) {
-//				size_t next_num{nuc_dist(rand)};
-//				switch (next_num) {
-//					case 0: out_file << 'A';
-//							break;
-//					case 1: out_file << 'C';
-//							break;
-//					case 2: out_file << 'D';
-//							break;
-//					case 3: out_file << 'E';
-//							break;
-//					case 4: out_file << 'F';
-//							break;
-//					case 5: out_file << 'G';
-//							break;
-//					case 6: out_file << 'H';
-//							break;
-//					case 7: out_file << 'I';
-//							break;
-//					case 8: out_file << 'K';
-//							break;
-//					case 9: out_file << 'L';
-//							break;
-//					case 10: out_file << 'M';
-//							break;
-//					case 11: out_file << 'N';
-//							 break;
-//					case 12: out_file << 'P';
-//							 break;
-//					case 13: out_file << 'Q';
-//							 break;
-//					case 14: out_file << 'R';
-//							 break;
-//					case 15: out_file << 'S';
-//							 break;
-//					case 16: out_file << 'T';
-//							 break;
-//					case 17: out_file << 'V';
-//							 break;
-//					case 18: out_file << 'W';
-//							 break;
-//					case 19: out_file << 'Y';
-//							 break;
-//					case 20: out_file << 'O';
-//							 break;
-//					case 21: out_file << 'M';
-//							 break;
-//					case 22: out_file << 'M';
-//							 break;
-//					case 23: out_file << 'M';
-//							 break;
-//					case 24: out_file << 'M';
-//							 break;
-//				}
-//
-//			}
-//			out_file << '\n';
-//		}
-//	}
-//	out_file.close();
 } // end main
 // FUNCTION DEFINITIONS
 // this function validates numeric arguments.
@@ -191,4 +115,46 @@ size_t get_numeric_arg(std::string const& n,std::string const& cmd) {
 		throw;
 	}
 	return ans;
+}
+
+void parse_args(int argc, char** argv, options & flags) {
+		for (size_t i{1}; i < argc; ++i) {
+			std::string arg = argv[i];
+			if (i+1 == argc) {
+				std::cerr << "missing required argument for: " << arg << '\n';
+				throw std::invalid_argument("");
+			}
+			if (arg == "--type") { // handle --type
+				std::string type = argv[++i];
+				if (type == "dna" || type == "rna" || type == "prot") {
+					flags.type = type;
+				} else {
+					std::cerr << "invalid argument to --type: " << type << '\n' << "choose one of ['dna','rna','prot']\n";
+					throw std::invalid_argument("");
+				}
+			}
+			else if (arg == "--min") { // handle --min
+				flags.min_len = get_numeric_arg(argv[++i], arg);
+			}
+			else if (arg == "--max") { // handle --max
+				flags.max_len = get_numeric_arg(argv[++i], arg);
+			} 
+			else if (arg == "--seq") { // handle seq
+				flags.seq = argv[++i];
+			}
+			else if (arg == "--length" || arg == "-l") { // handle length
+				flags.length = get_numeric_arg(argv[++i], arg);
+			}
+			else if (arg == "-n") { // handle n
+				flags.n = get_numeric_arg(argv[++i], arg);
+			}
+			else if (arg == "--out") { // handle --out
+				flags.out_file_name = argv[++i];
+			}
+			else {
+				std::cerr << "unrecognized flag: " << arg << '\n';
+				throw std::invalid_argument("");
+			}
+		}
+	
 }

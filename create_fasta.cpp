@@ -34,35 +34,20 @@ struct options {
 		os << "--type: specify the type of fasta file to create, (valid options are 'dna', 'rna', and 'prot')\n";
 	}
 };
-// if help exists in argv, print that argument and return true,
-// else return false
 // this function validates numeric arguments.
 // if the numeric argument is a valid positive integer, we simply return it
 // if the numeric argument is not a valid positive integer, throw or propogate exception that can be handled in main
 size_t get_numeric_arg(std::string const& n,std::string const& cmd);
+
+// if help exists in argv, print the help menue and return true,
+// else set each flag to its corresponding value and return false
+// if invalid flag used or mandatory argument missing, throw exception
 bool parse_args(int argc, char** argv, options & flags);
 
-// writes the new fasta file to out, selects one of letters at random.
-void create_fasta(std::ostream &out, options const& flags, std::vector<char> const& letters) {
-	std::random_device rd;
-	std::mt19937 rand(rd());
-	std::uniform_int_distribution<size_t> nuc_dist(0,letters.size()-1);
-	std::uniform_int_distribution<size_t> len_dist(flags.min_len,flags.max_len);
-	for (size_t each_seq{1}; each_seq <= flags.n; ++each_seq) {
-		std::string next_seq_name = "> " + flags.seq + std::to_string(each_seq) + '\n';
-		size_t next_len = len_dist(rand);
-		out << next_seq_name;
-		for (size_t i{0}; i < next_len;++i) {
-			size_t next_num{nuc_dist(rand)};
-			out << letters[next_num];
-		}
-		out << '\n';
-	}
-}
+// writes the new fasta file to out, selects one of 'letters' at random for each position.
+void create_fasta(std::ostream &out, options const& flags, std::vector<char> const& letters);
 
-
-
-// used for debugging only
+// used for debugging only, print the name and value of each member of 'flags'
 void __dump_args(options const& flags) {
 	std::cout << "PRINT ALL FLAGS:\n";
 	std::cout << flags.length << '\n' << flags.max_len << '\n' << flags.min_len << '\n' << flags.n << '\n' << flags.out_file_name << '\n' << flags.seq << '\n' << flags.type << '\n';
@@ -114,10 +99,9 @@ int main(int argc, char** argv) {
 
 	
 } // end main
-// FUNCTION DEFINITIONS
-// this function validates numeric arguments.
-// if the numeric argument is a valid positive integer, we simply return it
-// if the numeric argument is not a valid positive integer, throw or propogate exception that can be handled in main
+  
+// --------------------------- FUNCTION DEFINITIONS -----------
+
 size_t get_numeric_arg(std::string const& n,std::string const& cmd) {
 	long long ans;
 	try {
@@ -188,4 +172,21 @@ bool parse_args(int argc, char** argv, options & flags) {
 			}
 		}
 	return false;
+}
+
+void create_fasta(std::ostream &out, options const& flags, std::vector<char> const& letters) {
+	std::random_device rd;
+	std::mt19937 rand(rd());
+	std::uniform_int_distribution<size_t> nuc_dist(0,letters.size()-1);
+	std::uniform_int_distribution<size_t> len_dist(flags.min_len,flags.max_len);
+	for (size_t each_seq{1}; each_seq <= flags.n; ++each_seq) {
+		std::string next_seq_name = "> " + flags.seq + std::to_string(each_seq) + '\n';
+		size_t next_len = len_dist(rand);
+		out << next_seq_name;
+		for (size_t i{0}; i < next_len;++i) {
+			size_t next_num{nuc_dist(rand)};
+			out << letters[next_num];
+		}
+		out << '\n';
+	}
 }

@@ -18,6 +18,7 @@ struct options {
 	size_t n = 10;
 	std::string out_file_name = "";
 	std::string seq = "seq";
+	std::string cust_charset = "";
 	void h(std::ostream &os) const {
 		os << "[--length,-l], [--min], [--max], [--num_seqs,-n], [--out,-o], [--seq], [--type]\n";
 	}
@@ -79,7 +80,10 @@ int main(int argc, char** argv) {
 	else {
 		os = &std::cout;
 	}
-	if (flags.type == "dna") {
+	if (flags.cust_charset != "") {
+		std::vector<char> cust_vec(flags.cust_charset.begin(), flags.cust_charset.end());
+		create_fasta(*os, flags, cust_vec);
+	} else if (flags.type == "dna") {
 		create_fasta(*os, flags, {'A','C','G','T'});
 	} else if (flags.type == "rna") {
 		create_fasta(*os, flags, {'A', 'C', 'G', 'U'});
@@ -162,6 +166,9 @@ bool parse_args(int argc, char** argv, options & flags) {
 			}
 			else if (arg == "--out" || arg == "-o") { // handle --out
 				flags.out_file_name = argv[++i];
+			}
+			else if (arg == "--cust_charset") {
+				flags.cust_charset = argv[++i];
 			}
 			else {
 				std::cerr << "unrecognized flag: " << arg << '\n';

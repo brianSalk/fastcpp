@@ -48,10 +48,7 @@ bool parse_args(int argc, char** argv, options & flags);
 void create_fasta(std::ostream &out, options const& flags, std::vector<char> const& letters);
 
 // used for debugging only, print the name and value of each member of 'flags'
-void __dump_args(options const& flags) {
-	std::cout << "PRINT ALL FLAGS:\n";
-	std::cout << flags.length << '\n' << flags.max_len << '\n' << flags.min_len << '\n' << flags.n << '\n' << flags.out_file_name << '\n' << flags.seq << '\n' << flags.type << '\n';
-}
+void __dump_args(options const& flags);
 
 
 int main(int argc, char** argv) {
@@ -189,4 +186,8 @@ void create_fasta(std::ostream &out, options const& flags, std::vector<char> con
 		}
 		out << '\n';
 	}
+}
+void __dump_args(options const& flags) {
+	std::cout << "PRINT ALL FLAGS:\n";
+	std::cout << flags.length << '\n' << flags.max_len << '\n' << flags.min_len << '\n' << flags.n << '\n' << flags.out_file_name << '\n' << flags.seq << '\n' << flags.type << '\n';
 }

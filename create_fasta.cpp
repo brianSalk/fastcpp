@@ -1,7 +1,7 @@
 /*
- * do I want to add capabilities to this to allow user to pick
- * between RNA and DNA?
- * Do I want to have similar protein options?
+ * This program will create randomly generated fasta files when run from the command line
+ * 
+ * 
  */
 #include <random>
 #include <iostream>
@@ -33,6 +33,7 @@ struct options {
 		os << "--out, -o: outfile to print fasta file to.  (print to stdout if nothing is specified)\n";
 		os << "--seq: base name of the sequence, if multiple sequences are generated, ascending integers starting at 1 will be appended to the base name\n";
 		os << "--type: specify the type of fasta file to create, (valid options are 'dna', 'rna', and 'prot')\n";
+		os << "--cust_charset: specify your own character set to use.  Overrides value of --type\n";
 	}
 };
 // this function validates numeric arguments.
@@ -80,6 +81,7 @@ int main(int argc, char** argv) {
 	else {
 		os = &std::cout;
 	}
+	// if cust_charset is set, use cust_charset and ignore argument to --type
 	if (flags.cust_charset != "") {
 		std::vector<char> cust_vec(flags.cust_charset.begin(), flags.cust_charset.end());
 		create_fasta(*os, flags, cust_vec);
@@ -196,5 +198,5 @@ void create_fasta(std::ostream &out, options const& flags, std::vector<char> con
 }
 void __dump_args(options const& flags) {
 	std::cout << "PRINT ALL FLAGS:\n";
-	std::cout << flags.length << '\n' << flags.max_len << '\n' << flags.min_len << '\n' << flags.n << '\n' << flags.out_file_name << '\n' << flags.seq << '\n' << flags.type << '\n';
+	std::cout << flags.length << '\n' << flags.max_len << '\n' << flags.min_len << '\n' << flags.n << '\n' << flags.out_file_name << '\n' << flags.seq << '\n' << flags.type << '\n' << flags.cust_charset << '\n';
 }

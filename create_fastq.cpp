@@ -8,7 +8,16 @@
 #include <fstream>
 #include <iomanip>
 
+class options {
+	size_t read_length;
+	size_t num_reads;	
+	size_t min_qual;
+	size_t max_qual;
+	std::string fasta_file_name; 
+	std::string out_file_name;
+	
 
+};
 std::string quality_string(size_t read_length, std::uniform_int_distribution<size_t> &, std::mt19937 &);
 void insert_bad_base(std::string&, double bad_read_prob, std::mt19937&, std::uniform_real_distribution<double>&);
 void output(std::ostream &os, std::string& dna, size_t read_length, char min_qual, char max_qual, double bad_read_prob, size_t num_reads, std::string const& title) {

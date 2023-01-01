@@ -8,15 +8,29 @@
 #include <fstream>
 #include <iomanip>
 
-class options {
+struct options {
 	size_t read_length;
 	size_t num_reads;	
 	size_t min_qual;
 	size_t max_qual;
+	double bad_read_prob;
 	std::string fasta_file_name; 
 	std::string out_file_name;
-	
-
+	void h(ostream & os) const {
+		os << "[--help,-h],[--read-length,-l],[--number-of-reads, -n], [--min-max_quality,--min][--max-quality, --max], [--fasta-file, -i], [--bad-read-prob, --brp], [--out,-o]\n";
+	}
+	void help() const {
+		this->h(ostream & os);
+		os << std::left;
+		os << std::setw(30)<< "--help -h" << "display this help successfully and exit" << '\n';
+		os << std::setw(30)<< "--read-length -l" << "set read lenght" << '\n';
+		os << std::setw(30)<< "--number-of-reads -n" << "set number of reads" << '\n';
+		os << std::setw(30)<< "--min-quality --min" << "set minimum quality of phred quality string, use char as value" << '\n';
+		os << std::setw(30)<< "--max-quality --max" << "set maximum quality of phred quality string, use char as value" << '\n';
+		os << std::setw(30)<< "--fasta-file -i" << "name of fasta input file"<< '\n';
+		os << std::setw(30)<< "--bad-read-prob -brp [float]" << "probability of false read\n";
+		os << std::setw(30)<< "--out -o out_file" << "specify output fastq file\n";
+	}
 };
 std::string quality_string(size_t read_length, std::uniform_int_distribution<size_t> &, std::mt19937 &);
 void insert_bad_base(std::string&, double bad_read_prob, std::mt19937&, std::uniform_real_distribution<double>&);
@@ -38,31 +52,18 @@ void output(std::ostream &os, std::string& dna, size_t read_length, char min_qua
 
 	}	
 }
-int main(int argc, char* argv[]) {
+
+void parse_args(options & flags, char** argv, size_t const argc) {
 	size_t i = 1;
-	// variables
-	size_t read_length = 20;
-	size_t num_reads = 100;
-	size_t min_qual = '!';
-	size_t max_qual = 'J';
-	std::string fasta_file;
-	std::fstream in_file;
-	std::string out_file = "";
-	double bad_read_prob = 0;
 	while (i < argc) {
 		std::string next_arg = argv[i];
-		if (next_arg == "--help" || next_arg == "-h") {
+		if (next_arg == "--help") {
 			// display help and exit with 0
-			std::cerr << std::left;
-			std::cerr << std::setw(30)<< "--help -h" << "display this help successfully and exit" << '\n';
-			std::cerr << std::setw(30)<< "--read-length -l" << "set read lenght" << '\n';
-			std::cerr << std::setw(30)<< "--number-of-reads -n" << "set number of reads" << '\n';
-			std::cerr << std::setw(30)<< "--min-quality --min" << "set minimum quality of phred quality string, use char as value" << '\n';
-			std::cerr << std::setw(30)<< "--max-quality --max" << "set maximum quality of phred quality string, use char as value" << '\n';
-			std::cerr << std::setw(30)<< "--fasta-file -i" << "name of fasta input file"<< '\n';
-			std::cerr << std::setw(30)<< "--bad-read-prob -brp [float]" << "probability of false read";
-			std::cerr << std::setw(30)<< "--out -o out_file" << "specify output fastq file";
+			flags
 			return 0;
+		}
+		else if (next_arg == "-h") {
+
 		}
 		else if (next_arg == "--read-length" || next_arg == "-l") {
 			try {
@@ -119,6 +120,13 @@ int main(int argc, char* argv[]) {
 			std::cerr << "invalid command line argument\n";
 		}
 		++i;
+	}
+	
+}
+int main(int argc, char* argv[]) {
+	options flags;
+	try {
+		parse_args(flags, argv, argc);
 	}
 	if (!in_file.is_open()) {
 		std::cerr << "please provide a fasta file\n";

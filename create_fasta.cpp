@@ -5,7 +5,6 @@
  */
 #include <random>
 #include <iostream>
-#include <cstring>
 #include <stdexcept>
 #include <fstream>
 #include <limits>

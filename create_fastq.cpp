@@ -8,14 +8,22 @@
 #include <fstream>
 #include <iomanip>
 
+enum class bio_type {
+	dna,
+	rna,
+	prot,
+	cust_charstring,
+};
 struct options {
 	size_t read_length;
 	size_t num_reads;	
 	size_t min_qual;
 	size_t max_qual;
+	bio_type bio_type;
 	double bad_read_prob;
 	std::string fasta_file_name; 
 	std::string out_file_name;
+
 	void h(ostream & os) const {
 		os << "[--help,-h],[--read-length,-l],[--number-of-reads, -n], [--min-max_quality,--min][--max-quality, --max], [--fasta-file, -i], [--bad-read-prob, --brp], [--out,-o]\n";
 	}
@@ -59,15 +67,16 @@ void parse_args(options & flags, char** argv, size_t const argc) {
 		std::string next_arg = argv[i];
 		if (next_arg == "--help") {
 			// display help and exit with 0
-			flags
-			return 0;
+			flags.help(std::cout);
+			return true;
 		}
 		else if (next_arg == "-h") {
-
+			flags.h(std::cout);
+			return true;
 		}
 		else if (next_arg == "--read-length" || next_arg == "-l") {
 			try {
-				read_length = std::stoul(argv[++i]);
+				options::read_length = std::stoul(argv[++i]);
 			} catch(std::invalid_argument) {
 				std::cerr << "invalid argument for read length\n";
 				return 1;
@@ -125,8 +134,11 @@ void parse_args(options & flags, char** argv, size_t const argc) {
 }
 int main(int argc, char* argv[]) {
 	options flags;
+	bool helped = false;
 	try {
-		parse_args(flags, argv, argc);
+		if (parse_args(flags, argv, argc)) {
+			return 0;
+		}
 	}
 	if (!in_file.is_open()) {
 		std::cerr << "please provide a fasta file\n";

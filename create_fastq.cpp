@@ -117,7 +117,7 @@ void parse_args(options & flags, char** argv, size_t const argc) {
 		else if (next_arg == "--bad-read-prob" || next_arg == "--brp") {
 			try {
 				flags::bad_read_prob = std::stod(argv[++i]);
-				if (flags::bad_read_prob) {
+				if (flags::bad_read_prob < 0) {
 					throw std::invalid_argument("");
 				}
 			} catch(std::invalid_argument&) {
@@ -142,6 +142,9 @@ int main(int argc, char* argv[]) {
 		if (parse_args(flags, argv, argc)) {
 			return 0;
 		}
+	}
+	catch (...) {
+		return 1;
 	}
 	if (!in_file.is_open()) {
 		std::cerr << "please provide a fasta file\n";

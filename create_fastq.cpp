@@ -76,7 +76,7 @@ void parse_args(options & flags, char** argv, size_t const argc) {
 		}
 		else if (next_arg == "--read-length" || next_arg == "-l") {
 			try {
-				options::read_length = std::stoul(argv[++i]);
+				flags::read_length = std::stoul(argv[++i]);
 			} catch(std::invalid_argument) {
 				std::cerr << "invalid argument for read length\n";
 				throw;
@@ -84,7 +84,7 @@ void parse_args(options & flags, char** argv, size_t const argc) {
 		}
 		else if (next_arg == "--number-of-reads" || next_arg == "-n") {
 			try {
-				num_reads = std::stoul(argv[++i]);
+				flags::num_reads = std::stoul(argv[++i]);
 			} catch(std::invalid_argument) {
 				std::cerr << "invalid argument for number of reads\n";
 				throw;
@@ -92,7 +92,7 @@ void parse_args(options & flags, char** argv, size_t const argc) {
 		}
 		else if (next_arg == "--max-quality" || next_arg == "--max") {
 			try {
-				max_qual = argv[++i][0];
+				flags::max_qual = argv[++i][0];
 			} catch(std::invalid_argument const& e) {
 				std::cerr << "invalid argument for max-quality\n";
 				throw;
@@ -100,15 +100,15 @@ void parse_args(options & flags, char** argv, size_t const argc) {
 		}
 		else if (next_arg == "--min-quality" || next_arg == "--min") {
 			try {
-				min_qual = argv[++i][0];
+				flags::min_qual = argv[++i][0];
 			} catch(std::invalid_argument) {
 				std::cerr << "invalid argument for min-quality\n";
 				throw;
 			}
 		}
 		else if (next_arg == "--fasta-file" || next_arg == "-i") {
-			fasta_file = argv[++i];
-			in_file = std::fstream(fasta_file, std::ios::in);	
+			flags::fasta_file_name = argv[++i];
+			in_file = std::fstream(flags::fasta_file_name, std::ios::in);	
 			if (!in_file.is_open()) {
 				std::cerr << "problem opening file " << fasta_file << '\n';
 				throw;
@@ -116,14 +116,17 @@ void parse_args(options & flags, char** argv, size_t const argc) {
 		}
 		else if (next_arg == "--bad-read-prob" || next_arg == "--brp") {
 			try {
-				bad_read_prob = std::stod(argv[++i]);
+				flags::bad_read_prob = std::stod(argv[++i]);
+				if (flags::bad_read_prob) {
+					throw std::invalid_argument("");
+				}
 			} catch(std::invalid_argument&) {
 				std::cerr << "invalid argument to probability\n";		
 				throw;
 			}
 		}
 		else if (next_arg == "--out" || next_arg == "-o") {
-			out_file = argv[++i];
+			flags::out_file_name = argv[++i];
 		}
 		else {
 			std::cerr << "invalid command line argument: " << next_arg << "\n";

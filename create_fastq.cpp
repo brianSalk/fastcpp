@@ -15,12 +15,12 @@ enum class bio_type {
 	cust_charstring,
 };
 struct options {
-	size_t read_length;
-	size_t num_reads;	
-	size_t min_qual;
-	size_t max_qual;
+	size_t read_length = 100;
+	size_t num_reads = 10;	
+	size_t min_qual = '1';
+	size_t max_qual = '5';
 	bio_type type;
-	double bad_read_prob;
+	double bad_read_prob = 0;
 	std::string fasta_file_name; 
 	std::string out_file_name;
 	void h(std::ostream & os) const {
@@ -51,6 +51,10 @@ void output(std::ostream &os, std::string& bio_string, size_t read_length, char 
 	std::uniform_int_distribution<size_t> q_dist(min_qual, max_qual);
 	insert_bad_char(bio_string, char_set,bad_read_prob, rand, double_dist);
 	// randomly select an index in the fasta file DNA and read from that 
+	if (bio_string.size() < read_length) {
+		std::cerr << "read length longer than input sequence\n";
+		throw std::invalid_argument("");
+	}
 	for (size_t i = 0; i < num_reads; ++i) {
 		size_t num = dist(rand);
 		os << '@' << title << '\n';
@@ -177,6 +181,7 @@ int main(int argc, char* argv[]) {
 		ofs.close();
 
 	}
+	std::cout << "printed\n";
 }
 
 // generate a random phred quality string

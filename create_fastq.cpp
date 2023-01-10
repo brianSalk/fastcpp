@@ -12,7 +12,7 @@ enum class bio_type {
 	dna,
 	rna,
 	prot,
-	cust_charstring,
+	cust_charset,
 };
 struct options {
 	size_t read_length = 100;
@@ -23,6 +23,7 @@ struct options {
 	double bad_read_prob = 0;
 	std::string fasta_file_name; 
 	std::string out_file_name;
+	std::string char_set;
 	void h(std::ostream & os) const {
 		os << "[--help,-h],[--read-length,-l],[--number-of-reads, -n], [--min-max_quality,--min][--max-quality, --max], [--fasta-file, -i], [--bad-read-prob, --brp], [--out,-o]\n";
 	}
@@ -135,6 +136,26 @@ bool parse_args(options & flags, char** argv, size_t const argc) {
 				throw std::invalid_argument("");
 			}
 		}
+		else if (next_arg == "--type") {
+			std::string type = argv[++i];
+			if (type == "dna") {
+				flags.char_set = "ACGT";
+			} else if (type == "rna") {
+				flags.char_set = "ACGU";
+			} else if (type == "prot") {
+				flags.char_set = "YZ";
+				for (char c = 'A'; c <= 'W'; ++i) {
+					flags.char_set.push_back(c);
+				}
+			} else {
+				std::cerr << "invalid argument to --type: " << type << '\n';
+				std::cerr << "valid arguments to --type are: dna|rna|prot\n";
+				throw std::invalid_argument("");
+			}
+		}
+		else if (next_arg == "--cust_charset") {
+			flags.char_set = argv[++i];
+		}
 		else {
 			std::cerr << "invalid command line argument: " << next_arg << "\n";
 			throw std::invalid_argument("");
@@ -144,8 +165,6 @@ bool parse_args(options & flags, char** argv, size_t const argc) {
 	return false;
 }
 int main(int argc, char* argv[]) {
-	// FIX ME: hardcoded for testing only, remove this after you add logic to change string-type
-	std::string char_set = "ACGT";
 	options flags;
 	bool helped = false;
 	try {
@@ -174,11 +193,11 @@ int main(int argc, char* argv[]) {
 		bio_string += each_line;
 	}
 	if (flags.out_file_name == "") {
-		output(std::cout,bio_string,flags.read_length, flags.min_qual, flags.max_qual, flags.bad_read_prob, flags.num_reads, title, char_set);
+		output(std::cout,bio_string,flags.read_length, flags.min_qual, flags.max_qual, flags.bad_read_prob, flags.num_reads, title, flags.char_set);
 	}
 	else {
 		std::ofstream ofs(flags.out_file_name);
-		output(ofs,bio_string, flags.read_length, flags.min_qual, flags.max_qual, flags.bad_read_prob, flags.num_reads, title, char_set);
+		output(ofs,bio_string, flags.read_length, flags.min_qual, flags.max_qual, flags.bad_read_prob, flags.num_reads, title, flags.char_set);
 		ofs.close();
 
 	}

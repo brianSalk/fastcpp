@@ -19,16 +19,15 @@ struct options {
 	size_t num_reads;	
 	size_t min_qual;
 	size_t max_qual;
-	bio_type bio_type;
+	bio_type type;
 	double bad_read_prob;
 	std::string fasta_file_name; 
 	std::string out_file_name;
-
-	void h(ostream & os) const {
+	void h(std::ostream & os) const {
 		os << "[--help,-h],[--read-length,-l],[--number-of-reads, -n], [--min-max_quality,--min][--max-quality, --max], [--fasta-file, -i], [--bad-read-prob, --brp], [--out,-o]\n";
 	}
-	void help() const {
-		this->h(ostream & os);
+	void help(std::ostream & os) const {
+		this->h(os);
 		os << std::left;
 		os << std::setw(30)<< "--help -h" << "display this help successfully and exit" << '\n';
 		os << std::setw(30)<< "--read-length -l" << "set read lenght" << '\n';
@@ -41,27 +40,28 @@ struct options {
 	}
 };
 std::string quality_string(size_t read_length, std::uniform_int_distribution<size_t> &, std::mt19937 &);
-void insert_bad_base(std::string&, double bad_read_prob, std::mt19937&, std::uniform_real_distribution<double>&);
-void output(std::ostream &os, std::string& dna, size_t read_length, char min_qual, char max_qual, double bad_read_prob, size_t num_reads, std::string const& title) {
+void insert_bad_char(std::string&,std::string const& char_set, double bad_read_prob, std::mt19937&, std::uniform_real_distribution<double>&);
+void output(std::ostream &os, std::string& bio_string, size_t read_length, char min_qual, char max_qual, double bad_read_prob, 
+		size_t num_reads, std::string const& title, std::string char_set) {
 	std::random_device rd;
 	std::mt19937 rand(rd());
-	std::uniform_int_distribution<size_t> dist(0, dna.size()-read_length);
+	std::uniform_int_distribution<size_t> dist(0, bio_string.size()-read_length);
 	std::uniform_real_distribution<double> double_dist(0,1);
 	// use a different distribution for the qualities.
 	std::uniform_int_distribution<size_t> q_dist(min_qual, max_qual);
-	insert_bad_base(dna, bad_read_prob, rand, double_dist);
+	insert_bad_char(bio_string, char_set,bad_read_prob, rand, double_dist);
 	// randomly select an index in the fasta file DNA and read from that 
 	for (size_t i = 0; i < num_reads; ++i) {
 		size_t num = dist(rand);
 		os << '@' << title << '\n';
-		os << dna.substr(num, read_length) << '\n';
+		os << bio_string.substr(num, read_length) << '\n';
 		os << "+\n";
 		os << quality_string(read_length, q_dist, rand) << '\n';
 
 	}	
 }
 
-void parse_args(options & flags, char** argv, size_t const argc) {
+bool parse_args(options & flags, char** argv, size_t const argc) {
 	size_t i = 1;
 	while (i < argc) {
 		std::string next_arg = argv[i];
@@ -76,7 +76,7 @@ void parse_args(options & flags, char** argv, size_t const argc) {
 		}
 		else if (next_arg == "--read-length" || next_arg == "-l") {
 			try {
-				flags::read_length = std::stoul(argv[++i]);
+				flags.read_length = std::stoul(argv[++i]);
 			} catch(std::invalid_argument) {
 				std::cerr << "invalid argument for read length\n";
 				throw;
@@ -84,7 +84,7 @@ void parse_args(options & flags, char** argv, size_t const argc) {
 		}
 		else if (next_arg == "--number-of-reads" || next_arg == "-n") {
 			try {
-				flags::num_reads = std::stoul(argv[++i]);
+				flags.num_reads = std::stoul(argv[++i]);
 			} catch(std::invalid_argument) {
 				std::cerr << "invalid argument for number of reads\n";
 				throw;
@@ -92,7 +92,7 @@ void parse_args(options & flags, char** argv, size_t const argc) {
 		}
 		else if (next_arg == "--max-quality" || next_arg == "--max") {
 			try {
-				flags::max_qual = argv[++i][0];
+				flags.max_qual = argv[++i][0];
 			} catch(std::invalid_argument const& e) {
 				std::cerr << "invalid argument for max-quality\n";
 				throw;
@@ -100,24 +100,23 @@ void parse_args(options & flags, char** argv, size_t const argc) {
 		}
 		else if (next_arg == "--min-quality" || next_arg == "--min") {
 			try {
-				flags::min_qual = argv[++i][0];
+				flags.min_qual = argv[++i][0];
 			} catch(std::invalid_argument) {
 				std::cerr << "invalid argument for min-quality\n";
 				throw;
 			}
 		}
 		else if (next_arg == "--fasta-file" || next_arg == "-i") {
-			flags::fasta_file_name = argv[++i];
-			in_file = std::fstream(flags::fasta_file_name, std::ios::in);	
-			if (!in_file.is_open()) {
-				std::cerr << "problem opening file " << fasta_file << '\n';
+			 flags.fasta_file_name = argv[++i];
+			if (std::count(flags.fasta_file_name.begin(), flags.fasta_file_name.end(), '/')) {
+				std::cerr << "cannot create file named " << flags.fasta_file_name << '\n';
 				throw;
 			}
 		}
 		else if (next_arg == "--bad-read-prob" || next_arg == "--brp") {
 			try {
-				flags::bad_read_prob = std::stod(argv[++i]);
-				if (flags::bad_read_prob < 0) {
+				flags.bad_read_prob = std::stod(argv[++i]);
+				if (flags.bad_read_prob < 0) {
 					throw std::invalid_argument("");
 				}
 			} catch(std::invalid_argument&) {
@@ -126,16 +125,22 @@ void parse_args(options & flags, char** argv, size_t const argc) {
 			}
 		}
 		else if (next_arg == "--out" || next_arg == "-o") {
-			flags::out_file_name = argv[++i];
+			flags.out_file_name = argv[++i];
+			if (std::count(flags.out_file_name.begin(),flags.out_file_name.end(),'/')) {
+				std::cerr << "cannot create fastq file with title " << flags.out_file_name << '\n';
+				throw std::invalid_argument("");
+			}
 		}
 		else {
 			std::cerr << "invalid command line argument: " << next_arg << "\n";
 		}
 		++i;
 	}
-	
+	return false;
 }
 int main(int argc, char* argv[]) {
+	// FIX ME: hardcoded for testing only, remove this after you add logic to change string-type
+	std::string char_set = "ACGT";
 	options flags;
 	bool helped = false;
 	try {
@@ -146,33 +151,35 @@ int main(int argc, char* argv[]) {
 	catch (...) {
 		return 1;
 	}
+	std::ifstream in_file(flags.fasta_file_name);
 	if (!in_file.is_open()) {
 		std::cerr << "please provide a fasta file\n";
 		return 1;
 	}
-	std::string dna = "";
+	std::string bio_string = "";
 	std::string each_line;
 	std::string title;
 	std::getline(in_file, title);
 	// remove '<' and trailing whitespace from title.
+	size_t i = 0;
 	for (i = 1; i < title.size() && title[i] != ' '; ++i) {}
 	title = title.substr(i+1);
 
 	while (in_file >> each_line && each_line[0] != '>') {
-		dna += each_line;
+		bio_string += each_line;
 	}
-	if (out_file == "") {
-		output(std::cout,dna, read_length, min_qual, max_qual,bad_read_prob, num_reads, title);
+	if (flags.out_file_name == "") {
+		output(std::cout,bio_string,flags.read_length, flags.min_qual, flags.max_qual, flags.bad_read_prob, flags.num_reads, title, char_set);
 	}
 	else {
-		std::ofstream ofs(out_file);
-		output(ofs,dna, read_length, min_qual, max_qual,bad_read_prob, num_reads, title);
+		std::ofstream ofs(flags.out_file_name);
+		output(ofs,bio_string, flags.read_length, flags.min_qual, flags.max_qual, flags.bad_read_prob, flags.num_reads, title, char_set);
 		ofs.close();
 
 	}
 }
 
-
+// generate a random phred quality string
 std::string quality_string(size_t read_length, std::uniform_int_distribution<size_t> &dist, std::mt19937 & rand) {
 	std::string ans;
 	ans.reserve(read_length);
@@ -181,21 +188,19 @@ std::string quality_string(size_t read_length, std::uniform_int_distribution<siz
 	}
 	return ans;
 }
-void insert_bad_base(std::string& dna, double bad_read_prob, std::mt19937& rand, std::uniform_real_distribution<double> & real_dist) {
-	std::uniform_int_distribution<size_t> base_dist(0,4) ;
-	for (size_t i = 0; i < dna.size(); ++i) {
+// TO DO: ask people what kind of random functionality they would even want..., should I even focus on this much?
+void insert_bad_char(std::string& bio_string, std::string const& char_set, double bad_read_prob, std::mt19937& rand, std::uniform_real_distribution<double> & real_dist) {
+	std::uniform_int_distribution<size_t> base_dist(0,char_set.size()) ;
+	for (size_t i = 0; i < bio_string.size(); ++i) {
 		if (real_dist(rand) <= bad_read_prob) {
 			short num = base_dist(rand);
-			switch(num) {
-				case 0: dna[i] = (dna[i] != 'A') ? 'A' : 'C';
-						break;
-				case 1: dna[i] = (dna[i] != 'C') ? 'C' : 'G';
-						break;
-				case 2: dna[i] = (dna[i] != 'G') ? 'G' : 'T';
-						break;
-				case 3: dna[i] = (dna[i] != 'T') ? 'T' : 'A';
-						break;
+			if (char_set[num] == bio_string[i]) {
+				if (++num == char_set.size()) {
+					num = 0;
+				}
 			}
+			char bad_char = char_set[num];
+			bio_string[i] = bad_char;
 		}
 	}
 }

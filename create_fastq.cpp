@@ -201,7 +201,6 @@ int main(int argc, char* argv[]) {
 		ofs.close();
 
 	}
-	std::cout << "printed\n";
 }
 
 // generate a random phred quality string

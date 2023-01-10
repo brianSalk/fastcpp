@@ -137,6 +137,7 @@ bool parse_args(options & flags, char** argv, size_t const argc) {
 		}
 		else {
 			std::cerr << "invalid command line argument: " << next_arg << "\n";
+			throw std::invalid_argument("");
 		}
 		++i;
 	}

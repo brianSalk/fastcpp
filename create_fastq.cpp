@@ -192,14 +192,18 @@ int main(int argc, char* argv[]) {
 	while (in_file >> each_line && each_line[0] != '>') {
 		bio_string += each_line;
 	}
-	if (flags.out_file_name == "") {
-		output(std::cout,bio_string,flags.read_length, flags.min_qual, flags.max_qual, flags.bad_read_prob, flags.num_reads, title, flags.char_set);
+	try {
+		if (flags.out_file_name == "") {
+			output(std::cout,bio_string,flags.read_length, flags.min_qual, flags.max_qual, flags.bad_read_prob, flags.num_reads, title, flags.char_set);
+		}
+		else {
+			std::ofstream ofs(flags.out_file_name);
+			output(ofs,bio_string, flags.read_length, flags.min_qual, flags.max_qual, flags.bad_read_prob, flags.num_reads, title, flags.char_set);
+			ofs.close();
+		}
 	}
-	else {
-		std::ofstream ofs(flags.out_file_name);
-		output(ofs,bio_string, flags.read_length, flags.min_qual, flags.max_qual, flags.bad_read_prob, flags.num_reads, title, flags.char_set);
-		ofs.close();
-
+	catch (...) {
+		return 9;
 	}
 }
 

@@ -8,18 +8,11 @@
 #include <fstream>
 #include <iomanip>
 
-enum class bio_type {
-	dna,
-	rna,
-	prot,
-	cust_charset,
-};
 struct options {
 	size_t read_length = 100;
 	size_t num_reads = 10;	
 	size_t min_qual = '1';
 	size_t max_qual = '5';
-	bio_type type;
 	double bad_read_prob = 0;
 	std::string fasta_file_name; 
 	std::string out_file_name;

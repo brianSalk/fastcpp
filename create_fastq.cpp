@@ -8,6 +8,8 @@
 #include <fstream>
 #include <iomanip>
 
+// organize all command line switches into one struct along
+// with help functions
 struct options {
 	size_t read_length = 100;
 	size_t num_reads = 10;	
@@ -40,6 +42,7 @@ void insert_bad_char(std::string&,std::string const& char_set,
 void output(std::ostream &os, std::string& bio_string, options & flags, std::string const& title); 
 
 bool parse_args(options & flags, char** argv, size_t const argc);
+
 int main(int argc, char* argv[]) {
 	options flags;
 	bool helped = false;
@@ -83,7 +86,8 @@ int main(int argc, char* argv[]) {
 	}
 }
 
-// generate a random phred quality string
+// generate a random phred quality string between --min and --max
+// inclusive
 std::string quality_string(size_t read_length, std::uniform_int_distribution<size_t> &dist, std::mt19937 & rand) {
 	std::string ans;
 	ans.reserve(read_length);
@@ -92,7 +96,7 @@ std::string quality_string(size_t read_length, std::uniform_int_distribution<siz
 	}
 	return ans;
 }
-// TO DO: ask people what kind of random functionality they would even want..., should I even focus on this much?
+// inserts a bad char from the char_set var at probability --brp
 void insert_bad_char(std::string& bio_string, std::string const& char_set, double bad_read_prob, std::mt19937& rand, std::uniform_real_distribution<double> & real_dist) {
 	std::uniform_int_distribution<size_t> base_dist(0,char_set.size()) ;
 	for (size_t i = 0; i < bio_string.size(); ++i) {
@@ -108,7 +112,8 @@ void insert_bad_char(std::string& bio_string, std::string const& char_set, doubl
 		}
 	}
 }
-
+// output the fastq sequence with bad insertions at probability
+// --bad_base_probability
 void output(std::ostream &os, std::string& bio_string, options & flags, std::string const& title) {
 	std::random_device rd;
 	std::mt19937 rand(rd());
@@ -131,7 +136,7 @@ void output(std::ostream &os, std::string& bio_string, options & flags, std::str
 
 	}	
 }
-
+// parse command line arguments, if -h or --help then return True
 bool parse_args(options & flags, char** argv, size_t const argc) {
 	size_t i = 1;
 	while (i < argc) {

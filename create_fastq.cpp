@@ -41,7 +41,104 @@ void output(std::ostream &os, std::string& bio_string,
 		size_t read_length, char min_qual, char max_qual, double bad_read_prob, 
 		size_t num_reads, std::string const& title, std::string char_set); 
 
-bool parse_args(options & flags, char** argv, size_t const argc) {
+bool parse_args(options & flags, char** argv, size_t const argc);
+int main(int argc, char* argv[]) {
+	options flags;
+	bool helped = false;
+	try {
+		if (parse_args(flags, argv, argc)) {
+			return 0;
+		}
+	}
+	catch (...) {
+		return 1;
+	}
+	std::ifstream in_file(flags.fasta_file_name);
+	if (!in_file.is_open()) {
+		std::cerr << "please provide a fasta file\n";
+		return 1;
+	}
+	std::string bio_string = "";
+	std::string each_line;
+	std::string title;
+	std::getline(in_file, title);
+	// remove '<' and trailing whitespace from title.
+	size_t i = 0;
+	for (i = 1; i < title.size() && title[i] != ' '; ++i) {}
+	title = title.substr(i+1);
+
+	while (in_file >> each_line && each_line[0] != '>') {
+		bio_string += each_line;
+	}
+	try {
+		if (flags.out_file_name == "") {
+			output(std::cout,bio_string,flags.read_length, flags.min_qual, flags.max_qual, flags.bad_read_prob, flags.num_reads, title, flags.char_set);
+		}
+		else {
+			std::ofstream ofs(flags.out_file_name);
+			output(ofs,bio_string, flags.read_length, flags.min_qual, flags.max_qual, flags.bad_read_prob, flags.num_reads, title, flags.char_set);
+			ofs.close();
+		}
+	}
+	catch (...) {
+		return 9;
+	}
+}
+
+// generate a random phred quality string
+std::string quality_string(size_t read_length, std::uniform_int_distribution<size_t> &dist, std::mt19937 & rand) {
+	std::string ans;
+	ans.reserve(read_length);
+	for (size_t i = 0; i < read_length; ++i) {
+		ans.push_back(dist(rand));
+	}
+	return ans;
+}
+// TO DO: ask people what kind of random functionality they would even want..., should I even focus on this much?
+void insert_bad_char(std::string& bio_string, std::string const& char_set, double bad_read_prob, std::mt19937& rand, std::uniform_real_distribution<double> & real_dist) {
+	std::uniform_int_distribution<size_t> base_dist(0,char_set.size()) ;
+	for (size_t i = 0; i < bio_string.size(); ++i) {
+		if (real_dist(rand) <= bad_read_prob) {
+			short num = base_dist(rand);
+			if (char_set[num] == bio_string[i]) {
+				if (++num == char_set.size()) {
+					num = 0;
+				}
+			}
+			char bad_char = char_set[num];
+			bio_string[i] = bad_char;
+		}
+	}
+}
+
+void output(std::ostream &os, std::string& bio_string, 
+		size_t read_length, char min_qual, char max_qual, double bad_read_prob, 
+		size_t num_reads, std::string const& title, std::string char_set)
+{
+	std::random_device rd;
+	std::mt19937 rand(rd());
+	std::uniform_int_distribution<size_t> dist(0, bio_string.size()-read_length);
+	std::uniform_real_distribution<double> double_dist(0,1);
+	// use a different distribution for the qualities.
+	std::uniform_int_distribution<size_t> q_dist(min_qual, max_qual);
+	insert_bad_char(bio_string, char_set,bad_read_prob, rand, double_dist);
+	// randomly select an index in the fasta file DNA and read from that 
+	if (bio_string.size() < read_length) {
+		std::cerr << "read length longer than input sequence\n";
+		throw std::invalid_argument("");
+	}
+	for (size_t i = 0; i < num_reads; ++i) {
+		size_t num = dist(rand);
+		os << '@' << title << '\n';
+		os << bio_string.substr(num, read_length) << '\n';
+		os << "+\n";
+		os << quality_string(read_length, q_dist, rand) << '\n';
+
+	}	
+}
+
+bool parse_args(options & flags, char** argv, size_t const argc) 
+{
 	size_t i = 1;
 	while (i < argc) {
 		std::string next_arg = argv[i];
@@ -138,98 +235,4 @@ bool parse_args(options & flags, char** argv, size_t const argc) {
 		++i;
 	}
 	return false;
-}
-int main(int argc, char* argv[]) {
-	options flags;
-	bool helped = false;
-	try {
-		if (parse_args(flags, argv, argc)) {
-			return 0;
-		}
-	}
-	catch (...) {
-		return 1;
-	}
-	std::ifstream in_file(flags.fasta_file_name);
-	if (!in_file.is_open()) {
-		std::cerr << "please provide a fasta file\n";
-		return 1;
-	}
-	std::string bio_string = "";
-	std::string each_line;
-	std::string title;
-	std::getline(in_file, title);
-	// remove '<' and trailing whitespace from title.
-	size_t i = 0;
-	for (i = 1; i < title.size() && title[i] != ' '; ++i) {}
-	title = title.substr(i+1);
-
-	while (in_file >> each_line && each_line[0] != '>') {
-		bio_string += each_line;
-	}
-	try {
-		if (flags.out_file_name == "") {
-			output(std::cout,bio_string,flags.read_length, flags.min_qual, flags.max_qual, flags.bad_read_prob, flags.num_reads, title, flags.char_set);
-		}
-		else {
-			std::ofstream ofs(flags.out_file_name);
-			output(ofs,bio_string, flags.read_length, flags.min_qual, flags.max_qual, flags.bad_read_prob, flags.num_reads, title, flags.char_set);
-			ofs.close();
-		}
-	}
-	catch (...) {
-		return 9;
-	}
-}
-
-// generate a random phred quality string
-std::string quality_string(size_t read_length, std::uniform_int_distribution<size_t> &dist, std::mt19937 & rand) {
-	std::string ans;
-	ans.reserve(read_length);
-	for (size_t i = 0; i < read_length; ++i) {
-		ans.push_back(dist(rand));
-	}
-	return ans;
-}
-// TO DO: ask people what kind of random functionality they would even want..., should I even focus on this much?
-void insert_bad_char(std::string& bio_string, std::string const& char_set, double bad_read_prob, std::mt19937& rand, std::uniform_real_distribution<double> & real_dist) {
-	std::uniform_int_distribution<size_t> base_dist(0,char_set.size()) ;
-	for (size_t i = 0; i < bio_string.size(); ++i) {
-		if (real_dist(rand) <= bad_read_prob) {
-			short num = base_dist(rand);
-			if (char_set[num] == bio_string[i]) {
-				if (++num == char_set.size()) {
-					num = 0;
-				}
-			}
-			char bad_char = char_set[num];
-			bio_string[i] = bad_char;
-		}
-	}
-}
-
-void output(std::ostream &os, std::string& bio_string, 
-		size_t read_length, char min_qual, char max_qual, double bad_read_prob, 
-		size_t num_reads, std::string const& title, std::string char_set)
-{
-	std::random_device rd;
-	std::mt19937 rand(rd());
-	std::uniform_int_distribution<size_t> dist(0, bio_string.size()-read_length);
-	std::uniform_real_distribution<double> double_dist(0,1);
-	// use a different distribution for the qualities.
-	std::uniform_int_distribution<size_t> q_dist(min_qual, max_qual);
-	insert_bad_char(bio_string, char_set,bad_read_prob, rand, double_dist);
-	// randomly select an index in the fasta file DNA and read from that 
-	if (bio_string.size() < read_length) {
-		std::cerr << "read length longer than input sequence\n";
-		throw std::invalid_argument("");
-	}
-	for (size_t i = 0; i < num_reads; ++i) {
-		size_t num = dist(rand);
-		os << '@' << title << '\n';
-		os << bio_string.substr(num, read_length) << '\n';
-		os << "+\n";
-		os << quality_string(read_length, q_dist, rand) << '\n';
-
-	}	
 }

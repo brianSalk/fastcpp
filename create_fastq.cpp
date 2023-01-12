@@ -33,31 +33,13 @@ struct options {
 		os << std::setw(30)<< "--out -o out_file" << "specify output fastq file\n";
 	}
 };
-std::string quality_string(size_t read_length, std::uniform_int_distribution<size_t> &, std::mt19937 &);
-void insert_bad_char(std::string&,std::string const& char_set, double bad_read_prob, std::mt19937&, std::uniform_real_distribution<double>&);
-void output(std::ostream &os, std::string& bio_string, size_t read_length, char min_qual, char max_qual, double bad_read_prob, 
-		size_t num_reads, std::string const& title, std::string char_set) {
-	std::random_device rd;
-	std::mt19937 rand(rd());
-	std::uniform_int_distribution<size_t> dist(0, bio_string.size()-read_length);
-	std::uniform_real_distribution<double> double_dist(0,1);
-	// use a different distribution for the qualities.
-	std::uniform_int_distribution<size_t> q_dist(min_qual, max_qual);
-	insert_bad_char(bio_string, char_set,bad_read_prob, rand, double_dist);
-	// randomly select an index in the fasta file DNA and read from that 
-	if (bio_string.size() < read_length) {
-		std::cerr << "read length longer than input sequence\n";
-		throw std::invalid_argument("");
-	}
-	for (size_t i = 0; i < num_reads; ++i) {
-		size_t num = dist(rand);
-		os << '@' << title << '\n';
-		os << bio_string.substr(num, read_length) << '\n';
-		os << "+\n";
-		os << quality_string(read_length, q_dist, rand) << '\n';
-
-	}	
-}
+std::string quality_string(size_t read_length, 
+		std::uniform_int_distribution<size_t> &, std::mt19937 &);
+void insert_bad_char(std::string&,std::string const& char_set, 
+		double bad_read_prob, std::mt19937&, std::uniform_real_distribution<double>&);
+void output(std::ostream &os, std::string& bio_string, 
+		size_t read_length, char min_qual, char max_qual, double bad_read_prob, 
+		size_t num_reads, std::string const& title, std::string char_set); 
 
 bool parse_args(options & flags, char** argv, size_t const argc) {
 	size_t i = 1;
@@ -226,4 +208,28 @@ void insert_bad_char(std::string& bio_string, std::string const& char_set, doubl
 	}
 }
 
+void output(std::ostream &os, std::string& bio_string, 
+		size_t read_length, char min_qual, char max_qual, double bad_read_prob, 
+		size_t num_reads, std::string const& title, std::string char_set)
+{
+	std::random_device rd;
+	std::mt19937 rand(rd());
+	std::uniform_int_distribution<size_t> dist(0, bio_string.size()-read_length);
+	std::uniform_real_distribution<double> double_dist(0,1);
+	// use a different distribution for the qualities.
+	std::uniform_int_distribution<size_t> q_dist(min_qual, max_qual);
+	insert_bad_char(bio_string, char_set,bad_read_prob, rand, double_dist);
+	// randomly select an index in the fasta file DNA and read from that 
+	if (bio_string.size() < read_length) {
+		std::cerr << "read length longer than input sequence\n";
+		throw std::invalid_argument("");
+	}
+	for (size_t i = 0; i < num_reads; ++i) {
+		size_t num = dist(rand);
+		os << '@' << title << '\n';
+		os << bio_string.substr(num, read_length) << '\n';
+		os << "+\n";
+		os << quality_string(read_length, q_dist, rand) << '\n';
 
+	}	
+}

@@ -35,7 +35,7 @@ struct options {
 		os << std::setw(30)<< "--out -o out_file" << "specify output fastq file\n";
 	}
 };
-std::string quality_string(size_t read_length, 
+std::string quality_string(size_t const read_length, 
 		std::uniform_int_distribution<size_t> &, std::mt19937 &);
 void insert_bad_char(std::string&,std::string const& char_set, 
 		double bad_read_prob, std::mt19937&, std::uniform_real_distribution<double>&);

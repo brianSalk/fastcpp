@@ -38,7 +38,7 @@ struct options {
 	}
 };
 std::string quality_string(size_t const read_length, 
-		std::uniform_int_distribution<size_t> &, std::mt19937 &);
+		std::uniform_int_distribution<size_t> & dist, std::mt19937 & rand);
 void insert_bad_char(std::string&,std::string const& char_set, 
 		double bad_read_prob, std::mt19937&, std::uniform_real_distribution<double>&);
 void output(std::ostream &os, std::string& bio_string, options & flags); 

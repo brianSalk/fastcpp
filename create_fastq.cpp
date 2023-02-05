@@ -19,8 +19,9 @@ struct options {
 	std::string fasta_file_name; 
 	std::string out_file_name;
 	std::string char_set;
+	std::string title = "";
 	void h(std::ostream & os) const {
-		os << "[--help,-h],[--read-length,-l],[--number-of-reads, -n], [--min-max_quality,--min][--max-quality, --max], [--fasta-file, -i], [--bad-read-prob, --brp], [--out,-o]\n";
+		os << "[--help,-h],[--read-length,-l],[--number-of-reads, -n], [--min-max_quality,--min][--max-quality, --max], [--fasta-file, -i], [--bad-read-prob, --brp], [--out,-o], [--seq]\n";
 	}
 	void help(std::ostream & os) const {
 		this->h(os);
@@ -33,15 +34,19 @@ struct options {
 		os << std::setw(30)<< "--fasta-file -i" << "name of fasta input file"<< '\n';
 		os << std::setw(30)<< "--bad-read-prob -brp [float]" << "probability of false read\n";
 		os << std::setw(30)<< "--out -o out_file" << "specify output fastq file\n";
+		os << std::setw(30)<< "-seq SEQ_NAME" << "specify name of sequence, if not specified, use same name as fasta file\n";
 	}
 };
 std::string quality_string(size_t const read_length, 
 		std::uniform_int_distribution<size_t> &, std::mt19937 &);
 void insert_bad_char(std::string&,std::string const& char_set, 
 		double bad_read_prob, std::mt19937&, std::uniform_real_distribution<double>&);
-void output(std::ostream &os, std::string& bio_string, options & flags, std::string const& title); 
+void output(std::ostream &os, std::string& bio_string, options & flags); 
 
 bool parse_args(options & flags, char** argv, size_t const argc);
+
+void assign_default_title(options & flags); 
+
 
 int main(int argc, char* argv[]) {
 	options flags;
@@ -61,26 +66,28 @@ int main(int argc, char* argv[]) {
 		std::cerr << "please provide a fasta file\n";
 		return 1;
 	}
+	// if --seq flag used, do nothing 
+	// else use the sequence name from the fasta file
+	if (flags.title == "") {
+		assign_default_title(flags);
+	}
 	std::string bio_string = "";
 	std::string each_line;
-	std::string title;
-	std::getline(in_file, title);
-	// remove '<' and trailing whitespace from title.
-	size_t i = 0;
-	for (i = 1; i < title.size() && title[i] != ' '; ++i) {}
-	title = title.substr(i+1);
 	// read each line from the fasta bio sequence
-	while (in_file >> each_line && each_line[0] != '>') {
-		bio_string += each_line;
+	while (std::getline(in_file, each_line)) {
+		std::cout << "reading line\n";
+		if (each_line[0] != '>') {
+			bio_string += each_line;
+		}
 	}
 	// write new fastq file to stdout if no file specified, else write to specified outfile
 	try {
 		if (flags.out_file_name == "") {
-			output(std::cout,bio_string, flags, title);
+			output(std::cout,bio_string, flags);
 		}
 		else {
 			std::ofstream ofs(flags.out_file_name);
-			output(ofs,bio_string, flags, title);
+			output(ofs,bio_string, flags);
 			ofs.close();
 		}
 	}
@@ -117,7 +124,7 @@ void insert_bad_char(std::string& bio_string, std::string const& char_set, doubl
 }
 // output the fastq sequence with bad insertions at probability
 // --bad_base_probability
-void output(std::ostream &os, std::string& bio_string, options & flags, std::string const& title) {
+void output(std::ostream &os, std::string& bio_string, options & flags) {
 	std::random_device rd;
 	std::mt19937 rand(rd());
 	std::uniform_int_distribution<size_t> dist(0, bio_string.size()-flags.read_length);
@@ -127,12 +134,12 @@ void output(std::ostream &os, std::string& bio_string, options & flags, std::str
 	insert_bad_char(bio_string, flags.char_set, flags.bad_read_prob, rand, double_dist);
 	// randomly select an index in the fasta file DNA and read from that 
 	if (bio_string.size() < flags.read_length) {
-		std::cerr << "read length longer than input sequence\n";
+		std::cerr << "read length " << flags.read_length << " longer than input sequence length " << bio_string.size() << '\n';
 		throw std::invalid_argument("");
 	}
 	for (size_t i = 0; i < flags.num_reads; ++i) {
 		size_t num = dist(rand);
-		os << '@' << title << '\n';
+		os << '@' << flags.title << '\n';
 		os << bio_string.substr(num, flags.read_length) << '\n';
 		os << "+\n";
 		os << quality_string(flags.read_length, q_dist, rand) << '\n';
@@ -222,6 +229,7 @@ bool parse_args(options & flags, char** argv, size_t const argc) {
 					flags.char_set.push_back(c);
 				}
 			} else {
+
 				std::cerr << "invalid argument to --type: " << type << '\n';
 				std::cerr << "valid arguments to --type are: dna|rna|prot\n";
 				throw std::invalid_argument("");
@@ -229,12 +237,28 @@ bool parse_args(options & flags, char** argv, size_t const argc) {
 		}
 		else if (next_arg == "--cust_charset") {
 			flags.char_set = argv[++i];
-		}
-		else {
+		} else if (next_arg == "--seq") {
+			std::string seq_name = argv[++i];
+			flags.title = seq_name;
+		} else {
 			std::cerr << "invalid command line argument: " << next_arg << "\n";
 			throw std::invalid_argument("");
 		}
 		++i;
 	}
 	return false;
+}
+
+void assign_default_title(options & flags) {
+	std::ifstream in_file(flags.fasta_file_name);
+	std::string title;
+	std::getline(in_file, title);
+	std::cout << "first line is " << title << '\n';
+	in_file.close();
+	// remove '>' and trailing whitespace from title.
+	size_t i = 1;
+	while (title[i] == ' ') {
+		++i;
+	}
+	flags.title = title.substr(i);
 }

@@ -64,8 +64,8 @@ int main(int argc, char** argv) {
 	catch(...) {
 		return 1;
 	}
-	// END process command line arguments
-	__dump_args(flags);
+	// END process command line arguments, uncomment next line to debug CLAs
+	//__dump_args(flags);
 	// if length specified, override values for min_len and max_len
 	if (flags.length != 0) {
 		flags.max_len = flags.length;

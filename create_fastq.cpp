@@ -46,6 +46,8 @@ bool parse_args(options & flags, char** argv, size_t const argc);
 int main(int argc, char* argv[]) {
 	options flags;
 	bool helped = false;
+	// parse command line arguments, if user entered --help or -h flag, exit successfully.
+	// if there is a malformed command line argument, exit with error code 1
 	try {
 		if (parse_args(flags, argv, argc)) {
 			return 0;
@@ -67,10 +69,11 @@ int main(int argc, char* argv[]) {
 	size_t i = 0;
 	for (i = 1; i < title.size() && title[i] != ' '; ++i) {}
 	title = title.substr(i+1);
-
+	// read each line from the fasta bio sequence
 	while (in_file >> each_line && each_line[0] != '>') {
 		bio_string += each_line;
 	}
+	// write new fastq file to stdout if no file specified, else write to specified outfile
 	try {
 		if (flags.out_file_name == "") {
 			output(std::cout,bio_string, flags, title);

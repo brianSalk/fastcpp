@@ -75,7 +75,6 @@ int main(int argc, char* argv[]) {
 	std::string each_line;
 	// read each line from the fasta bio sequence
 	while (std::getline(in_file, each_line)) {
-		std::cout << "reading line\n";
 		if (each_line[0] != '>') {
 			bio_string += each_line;
 		}

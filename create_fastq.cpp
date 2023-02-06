@@ -107,12 +107,12 @@ std::string quality_string(size_t read_length, std::uniform_int_distribution<siz
 }
 // inserts a bad char from the char_set var at probability --brp
 void insert_bad_char(std::string& bio_string, std::string const& char_set, double bad_read_prob, std::mt19937& rand, std::uniform_real_distribution<double> & real_dist) {
-	std::uniform_int_distribution<size_t> base_dist(0,char_set.size()) ;
+	std::uniform_int_distribution<size_t> base_dist(0,char_set.size()-1) ;
 	for (size_t i = 0; i < bio_string.size(); ++i) {
 		if (real_dist(rand) <= bad_read_prob) {
-			short num = base_dist(rand);
+			size_t num = base_dist(rand);
 			if (char_set[num] == bio_string[i]) {
-				if (++num == char_set.size()) {
+				if (++num >= char_set.size()) {
 					num = 0;
 				}
 			}
@@ -249,7 +249,6 @@ void assign_default_title(options & flags) {
 	std::ifstream in_file(flags.fasta_file_name);
 	std::string title;
 	std::getline(in_file, title);
-	std::cout << "first line is " << title << '\n';
 	in_file.close();
 	// remove '>' and trailing whitespace from title.
 	size_t i = 1;

@@ -223,10 +223,7 @@ bool parse_args(options & flags, char** argv, size_t const argc) {
 			} else if (type == "rna") {
 				flags.char_set = "ACGU";
 			} else if (type == "prot") {
-				flags.char_set = "YZ";
-				for (char c = 'A'; c <= 'W'; ++c) {
-					flags.char_set.push_back(c);
-				}
+				flags.char_set = "ABCDEFGHIJKLMNOPQRSTUVWYZ";
 			} else {
 
 				std::cerr << "invalid argument to --type: " << type << '\n';

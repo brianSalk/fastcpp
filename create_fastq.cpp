@@ -18,7 +18,7 @@ struct options {
 	double bad_read_prob = 0;
 	std::string fasta_file_name; 
 	std::string out_file_name;
-	std::string char_set;
+	std::string char_set = "";
 	std::string title = "";
 	void h(std::ostream & os) const {
 		os << "[--help,-h],[--read-length,-l],[--number-of-reads, -n], [--min-max_quality,--min][--max-quality, --max], [--fasta-file, -i], [--bad-read-prob, --brp], [--out,-o], [--seq]\n";

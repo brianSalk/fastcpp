@@ -37,6 +37,7 @@ struct options {
 		os << std::setw(30)<< "-seq SEQ_NAME" << "specify name of sequence, if not specified, use same name as fasta file\n";
 	}
 };
+// create function prototypes
 std::string quality_string(size_t const read_length, 
 		std::uniform_int_distribution<size_t> & dist, std::mt19937 & rand);
 void insert_bad_char(std::string&,std::string const& char_set, 
@@ -46,7 +47,6 @@ void output(std::ostream &os, std::string& bio_string, options & flags);
 bool parse_args(options & flags, char** argv, size_t const argc);
 
 void assign_default_title(options & flags); 
-
 
 int main(int argc, char* argv[]) {
 	options flags;
@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
 	catch (...) {
 		return 9;
 	}
-}
+} // END MAIN
 
 // generate a random phred quality string between --min and --max
 // inclusive
@@ -236,7 +236,7 @@ bool parse_args(options & flags, char** argv, size_t const argc) {
 		} else if (next_arg == "--seq") {
 			std::string seq_name = argv[++i];
 			flags.title = seq_name;
-		} else {
+		} else { // if not valid command, throw exception
 			std::cerr << "invalid command line argument: " << next_arg << "\n";
 			throw std::invalid_argument("");
 		}

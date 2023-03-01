@@ -124,60 +124,57 @@ size_t get_numeric_arg(std::string const& n,std::string const& cmd) {
 	return ans;
 }
 
-bool parse_args(int argc, char** argv, options & flags) {
-		for (size_t i{1}; i < argc; ++i) {
-			std::string arg = argv[i];
-			// if next arg is --help or -h, print help then return true
-			if (arg == "--help") {
-				flags.help(std::cout);
-				return true;
-			}
-			else if (arg == "-h") {
-				flags.h(std::cout);
-				return true;
-			}
 
-			if (i+1 == argc) {
-				std::cerr << "missing required argument for: " << arg << '\n';
-				throw std::invalid_argument("");
-			}
-			if (arg == "--type") { // handle --type
-				std::string type = argv[++i];
-				if (type == "dna" || type == "rna" || type == "prot") {
-					flags.type = type;
-				} else {
-					std::cerr << "invalid argument to --type: " << type << '\n' << "choose one of ['dna','rna','prot']\n";
-					throw std::invalid_argument("");
-				}
-			}
-			else if (arg == "--min") { // handle --min
-				flags.min_len = get_numeric_arg(argv[++i], arg);
-			}
-			else if (arg == "--max") { // handle --max
-				flags.max_len = get_numeric_arg(argv[++i], arg);
-			} 
-			else if (arg == "--seq") { // handle seq
-				flags.seq = argv[++i];
-			}
-			else if (arg == "--length" || arg == "-l") { // handle length
-				flags.length = get_numeric_arg(argv[++i], arg);
-			}
-			else if (arg == "-n" || arg == "--num_seqs") { // handle n
-				flags.n = get_numeric_arg(argv[++i], arg);
-			}
-			else if (arg == "--out" || arg == "-o") { // handle --out
-				flags.out_file_name = argv[++i];
-			}
-			else if (arg == "--cust_charset") {
-				flags.cust_charset = argv[++i];
-			}
-			else {
-				std::cerr << "unrecognized flag: " << arg << '\n';
-				throw std::invalid_argument("");
-			}
-		}
-	return false;
+bool parse_args(int argc, char** argv, options& flags) {
+    for (size_t i{1}; i < argc; ++i) {
+        const std::string arg = argv[i];
+
+        // Print help message and return true if the next arg is --help or -h
+        if (arg == "--help" || arg == "-h") {
+            flags.help(std::cout);
+            return true;
+        }
+
+        // Check for missing required argument
+        if (i+1 == argc) {
+            std::cerr << "missing required argument for: " << arg << '\n';
+            throw std::invalid_argument("");
+        }
+
+        // Handle different flags
+        if (arg == "--type") {
+            const std::string type = argv[++i];
+            if (type == "dna" || type == "rna" || type == "prot") {
+                flags.type = type;
+            } else {
+                std::cerr << "invalid argument to --type: " << type << '\n'
+                          << "choose one of ['dna','rna','prot']\n";
+                throw std::invalid_argument("");
+            }
+        } else if (arg == "--min") {
+            flags.min_len = get_numeric_arg(argv[++i], arg);
+        } else if (arg == "--max") {
+            flags.max_len = get_numeric_arg(argv[++i], arg);
+        } else if (arg == "--seq") {
+            flags.seq = argv[++i];
+        } else if (arg == "--length" || arg == "-l") {
+            flags.length = get_numeric_arg(argv[++i], arg);
+        } else if (arg == "-n" || arg == "--num_seqs") {
+            flags.n = get_numeric_arg(argv[++i], arg);
+        } else if (arg == "--out" || arg == "-o") {
+            flags.out_file_name = argv[++i];
+        } else if (arg == "--cust_charset") {
+            flags.cust_charset = argv[++i];
+        } else {
+            std::cerr << "unrecognized flag: " << arg << '\n';
+            throw std::invalid_argument("");
+        }
+    }
+
+    return false;
 }
+
+
 
 void create_fasta(std::ostream &out, options const& flags, std::vector<char> const& letters) {
 	std::random_device rd;

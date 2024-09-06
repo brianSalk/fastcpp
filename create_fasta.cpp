@@ -123,8 +123,6 @@ size_t get_numeric_arg(std::string const& n,std::string const& cmd) {
 	}
 	return ans;
 }
-
-
 bool parse_args(int argc, char** argv, options& flags) {
     for (size_t i{1}; i < argc; ++i) {
         const std::string arg = argv[i];
@@ -173,9 +171,6 @@ bool parse_args(int argc, char** argv, options& flags) {
 
     return false;
 }
-
-
-
 void create_fasta(std::ostream &out, options const& flags, std::vector<char> const& letters) {
 	std::random_device rd;
 	std::mt19937 rand(rd());

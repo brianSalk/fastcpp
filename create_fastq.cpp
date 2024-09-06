@@ -21,7 +21,7 @@ struct options {
 	std::string char_set = "";
 	std::string title = "";
 	void h(std::ostream & os) const {
-		os << "[--help,-h],[--read-length,-l],[--number-of-reads, -n], [--min-max_quality,--min][--max-quality, --max], [--fasta-file, -i], [--bad-read-prob, --brp], [--out,-o], [--seq]\n";
+		os << "[--help,-h],[--read-length,-l],[--number-of-reads, -n], [--min-quality,--min][--max-quality, --max], [--fasta-file, -i], [--bad-read-prob, --brp], [--out,-o], [--seq]\n";
 	}
 	void help(std::ostream & os) const {
 		this->h(os);
@@ -244,7 +244,7 @@ bool parse_args(options & flags, char** argv, size_t const argc) {
 	}
 	return false;
 }
-
+// if no title is supplied, use the one from the fasta file  
 void assign_default_title(options & flags) {
 	std::ifstream in_file(flags.fasta_file_name);
 	std::string title;
